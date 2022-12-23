@@ -1,12 +1,7 @@
-import requests
-import json
-
-# Replace YOUR_BOT_TOKEN with the actual token for your bot
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
-
-# The base URL for the Telegram API
-API_URL = 'https://api.telegram.org/bot' + BOT_TOKEN
-
+from constants import API_KEY
+from telegram import Update, Bot
+from telegram.ext import Updater, CallbackContext, CommandHandler
+import random
 # A list of quotes by Andrew Tate
 quotes = [
     "The only way to succeed is to work harder than anyone else.",
@@ -15,50 +10,31 @@ quotes = [
     "If you want to succeed, you have to be willing to put in the hard work."
 ]
 
-# A function that sends a message to a user or group on Telegram
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text("It's TopG here to inspire you with words of truth and wisdom")
+
+def topG(update: Update, context: CallbackContext):
+    response= quotes[random.randint(0,len(quotes)-1)]
+    update.message.reply_text(response)
+    Bot.send_animation()
+
+def error(update: Update, context: CallbackContext):
+    print(f"Update {update} caused error {context.error}")
 
 
-def send_message(chat_id, text):
-    data = {
-        'chat_id': chat_id,
-        'text': text
-    }
-    response = requests.post(API_URL + '/sendMessage', json=data)
+def main():
+    updater = Updater(token=API_KEY, use_context=True)
 
-# A function that handles incoming messages and commands
+    dispatcher = updater.dispatcher
 
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("topG", topG))
+    dispatcher.add_error_handler(error)
 
-def handle_update(update):
-    # Check if the update contains a message
-    if 'message' in update:
-        # Get the chat ID and message text
-        chat_id = update['message']['chat']['id']
-        text = update['message']['text']
-
-        # Check if the message is a command
-        if text.startswith('/'):
-        # Split the command and its arguments
-            tokens = text.split()
-            command = tokens[0]
-            args = tokens[1:]
-
-            # Handle the '/topg' command
-            if command == '/topg':
-                # Send a random quote by Andrew Tate
-                send_message(chat_id, quotes[0])
-
-# A function that retrieves updates from the Telegram API
+    updater.start_polling(5)
+    updater.idle()
 
 
-def get_updates():
-    response = requests.get(API_URL + '/getUpdates')
-    if response.status_code == 200:
-        return response.json()['result']
-    return []
-
-
-# The main loop that handles updates and sends messages
-while True:
-    updates = get_updates()
-    for update in updates:
-        handle_update(update)
+if __name__ == '__main__':
+    print("Bot Started...")
+    main()
